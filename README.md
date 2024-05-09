@@ -12,7 +12,8 @@
       python app.py
 ### Step 5: Initialize react vite:
       npm create vite@latest
-### Step 6: Open another terminal and install tailwind css and setup. Go to the frontend folder directory first. Then follow the steps in this website:
+### Step 6: Copy the front-end/src contents and paste it in your react app src folder.
+### Step 7: Open another terminal and install tailwind css and setup. Go to the frontend folder directory first. Then follow the steps in this website:
       https://tailwindcss.com/docs/guides/vite
-### Step 7: Run the react app in that terminal
+### Step 8: Run the react app in that terminal
       npm run dev
