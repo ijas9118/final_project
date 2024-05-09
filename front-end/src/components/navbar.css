@@ -1,0 +1,17 @@
+.nav-item {
+    margin-left: 1rem;
+    border-radius: 0.5rem;
+    padding: 5px 15px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .nav-item:hover {
+    background-color: rgb(34, 64, 93);
+    border-radius: 0.5rem;
+  }
+  
+  .nav-item.active {
+    background-color: rgb(31, 88, 145); 
+  }
