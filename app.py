@@ -10,7 +10,7 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-model = YOLO('./backend/YOLOv8/runs/detect/train/weights/best.pt')
+model = YOLO('./runs/detect/train/weights/best.pt')
 
 app.config['UPLOAD_FOLDER'] = './'
 
