@@ -10,6 +10,8 @@ function Navbar() {
         <div className="text-white flex items-center gap-3 text-3xl">Logo</div>
         <ul className="flex items-center justify-center">
             <li className={activeLink === 'Home' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('Home')}><Link to={'/'}>Home</Link></li>
+            <li className={activeLink === 'LineCounter' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('LineCounter')}><Link to={'/linecounter'}>Line Counter</Link></li>
+            <li className={activeLink === 'PolygonCounter' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('PolygonCounter')}><Link to={'/polygoncounter'}>Polygon Counter</Link></li>
             <li className={activeLink === 'Heatmap' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('Heatmap')}><Link to={'/heatmap'}>Heatmap</Link></li>
             <li className={activeLink === 'Multi-video' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('Multi-video')}><Link to={'/multi-video'}>Multi-video</Link></li>
             <li className={activeLink === 'About' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('About')}><Link to={'/about'}>About</Link></li>
