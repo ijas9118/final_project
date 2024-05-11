@@ -11,6 +11,7 @@ const LineCounter = () => {
   const [countData, setCountData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedClasses, setSelectedClasses] = useState([]);
+  const [outputFilename, setOutputFilename] = useState(null);
   const [confidence, setConfidence] = useState(0.3);
 
   const handleFileChange = (event) => {
@@ -53,6 +54,7 @@ const LineCounter = () => {
         const data = await response.json();
         console.log(data.message);
         setCountData(data.count_data);
+        setOutputFilename(data.output_filename);
       } else {
         console.error('Error uploading video:', response.status);
       }
@@ -249,6 +251,21 @@ const LineCounter = () => {
                   'Upload Video'
                 )}
               </button>
+            </div>
+          )}
+          {/* Output video section */}
+          {outputFilename && (
+            <div className="max-w-md mx-auto mt-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Output Video</h2>
+              <div className="video-container mb-8">
+                <video controls className="w-full rounded-md shadow-md">
+                  <source
+                    src={`http://localhost:5000/output_videos/${outputFilename}`}
+                    type="video/mp4"
+                  />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
             </div>
           )}
           {countData && (
