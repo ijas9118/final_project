@@ -26,12 +26,19 @@ data = {}
 def serve_output_video(filename):
     return send_from_directory(OUTPUT_VIDEO_DIR, filename)
 
-@app.route('/count_line', methods=['POST'])
+@app.route('/count_line', methods=['POST', 'GET'])
 def upload_file_count_line():
     # Get the file from the request
     file = request.files['file']
     selected_classes = json.loads(request.form['selectedClasses'])
     confidence = float(request.form.get('confidence'))
+    line_coordinates_str = request.form.get('lineCoordinates')
+    line_coordinates = json.loads(line_coordinates_str)
+    print(line_coordinates)
+    final_coordinates = []
+    for i in line_coordinates:
+        i = tuple(i)
+        final_coordinates.append(i)
 
     # Check if the file is present
     if file:
@@ -43,7 +50,7 @@ def upload_file_count_line():
         file.save(file_path)
 
         # Process the video file using YOLOv8 with selected class IDs
-        count_data = count_line(file_path, selected_classes, confidence)
+        count_data = count_line(file_path, selected_classes, confidence, final_coordinates)
         print(count_data)
         os.remove(file_path)
 
@@ -51,7 +58,7 @@ def upload_file_count_line():
     else:
         return jsonify({'error': 'No file uploaded'}), 400
     
-@app.route('/count_region', methods=['POST'])
+@app.route('/count_region', methods=['POST', 'GET'])
 def upload_file_count_polygon():
     file = request.files['file']
     selected_classes = json.loads(request.form['selectedClasses'])
@@ -135,6 +142,27 @@ def handle_multivideo():
     # Return the count data
     return {'message': 'Videos processed successfully', 'count_data1': data.get(1, {}), 'count_data2': data.get(2, {})}
 
+@app.route('/parking', methods=['POST', 'GET'])
+def upload_file_parking():
+    # Get the file from the request
+    file = request.files['file']
+
+    # Check if the file is present
+    if file:
+        # Get the filename and save it securely
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        # Save the file
+        file.save(file_path)
+
+        # Process the video file using YOLOv8 with selected class IDs
+        parking_safety(file_path)
+        os.remove(file_path)
+
+        return jsonify({'message': 'Video uploaded and processed successfully', 'output_filename': "parking_output.mp4"}), 200
+    else:
+        return jsonify({'error': 'No file uploaded'}), 400
 
 def run_tracker_in_thread(filename, model, file_index, confidence_threshold):
         video = cv2.VideoCapture(filename)  # Read the video file
@@ -181,9 +209,8 @@ def run_tracker_in_thread(filename, model, file_index, confidence_threshold):
         data[file_index] = count_data
 
 
-def count_line(filepath, selected_classes, confidence):
+def count_line(filepath, selected_classes, confidence, line_coordinates):
     cap = cv2.VideoCapture(filepath)
-    assert cap.isOpened(), "Error reading video file"
     assert cap.isOpened(), "Error reading video file"
     w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
 
@@ -192,11 +219,16 @@ def count_line(filepath, selected_classes, confidence):
                                fps,
                                (w, h))
 
-    line_points = [(20, 400), (1080, 400)]
-    classes_to_count = [int(class_id) for class_id in selected_classes]  # Convert selected class IDs to integers
+    scaled_line_coordinates = []
+    for x, y in line_coordinates:
+        scaled_x = int(x * w / 1080)  # Assuming the frontend canvas width is 1080
+        scaled_y = int(y * h / 720)  # Assuming the frontend canvas height is 720
+        scaled_line_coordinates.append([scaled_x, scaled_y])
+
+    classes_to_count = [int(class_id) for class_id in selected_classes]  
     print(classes_to_count)
     counter = object_counter.ObjectCounter()
-    counter.set_args(view_img=True, reg_pts=line_points, classes_names=model.names, draw_tracks=True, line_thickness=2)
+    counter.set_args(view_img=True, reg_pts=scaled_line_coordinates, classes_names=model.names, draw_tracks=True, line_thickness=2)
 
     while cap.isOpened():
         success, im0 = cap.read()
@@ -287,77 +319,56 @@ def heatMap(filepath, selected_classes, confidence):
     video_writer.release()
     cv2.destroyAllWindows()
 
-# def run_tracker_in_thread(filename, model, file_index, selected_classes, confidence_threshold, result_queue):
-#     if isinstance(filename, str):
-#         # filename is a string, pass it directly to VideoCapture
-#         video = cv2.VideoCapture(filename)
-#     else:
-#         # filename is not a string, assume it's a file object
-#         with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as temp_file:
-#             temp_file.write(filename.read())
-#             temp_file_path = temp_file.name
-#         video = cv2.VideoCapture(temp_file_path)
 
-#     count_data = {
-#         'car': {'in': 0, 'out': 0},
-#         'bus': {'in': 0, 'out': 0},
-#         'truck': {'in': 0, 'out': 0},
-#         'ambulance': {'in': 0, 'out': 0}
-#     }
+def parking_safety(filepath):
+    cap = cv2.VideoCapture(filepath)
+    assert cap.isOpened(), "Error reading video file"
+    w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
 
-#     while True:
-#         ret, frame = video.read()
+    video_writer = cv2.VideoWriter("./output_videos/parking_output.mp4",
+                               cv2.VideoWriter_fourcc(*'H264'),
+                               fps,
+                               (w, h))
 
-#         # Exit the loop if no more frames in the video
-#         if not ret:
-#             break
+    parking_spot_end_line_x = w // 2
+    
+    model = YOLO("./backend/Parking/car.pt")
 
-#         # Track objects in frames if available
-#         results = model.track(frame, persist=True, classes=selected_classes, conf=confidence_threshold)
-#         res_plotted = results[0].plot()
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-#         # Update count data
-#         for result in results[0].boxes.data.tolist():
-#             class_id = int(result[6])
-#             if class_id == 0:  # car
-#                 # Update count based on direction
-#                 count_data['car']['in' if result[4] > 0 else 'out'] += 1
-#             elif class_id == 1:  # bus
-#                 count_data['bus']['in' if result[4] > 0 else 'out'] += 1
-#             elif class_id == 2:  # truck
-#                 count_data['truck']['in' if result[4] > 0 else 'out'] += 1
-#             elif class_id == 3:  # ambulance
-#                 count_data['ambulance']['in' if result[4] > 0 else 'out'] += 1
+        results = model(frame)
 
-#         cv2.imshow(f"Tracking_Stream_{file_index}", res_plotted)
-#         key = cv2.waitKey(1)
-#         if key == ord('q'):
-#             break
+        annotated_frame = results[0].plot(conf=False, line_width=2, font_size=1)
 
-#     # Release video source
-#     video.release()
-#     temp_file.close()
+        incomplete_parking = False
 
-#     # Put the count data in the queue for the main thread to retrieve
-#     result_queue.put(count_data)
+        for box in results[0].boxes:
+            x1, y1, x2, y2 = box.xyxy[0]
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
-# def process_video(video, selected_classes, confidence_threshold):
 
-#     # Create a queue to pass the result from the thread
-#     result_queue = queue.Queue()
+            if x1 > parking_spot_end_line_x:
+                parking_status = "Parked"
+                color = (0, 255, 0)
+            else:
+                parking_status = "Not Parked"
+                color = (255, 0, 0) 
+                
+            cv2.line(annotated_frame, (parking_spot_end_line_x, 0), (parking_spot_end_line_x, h), (0, 255, 255), 2)
 
-#     # Run the tracker in a separate thread
-#     tracker_thread = threading.Thread(target=run_tracker_in_thread, args=(video, model, 1, selected_classes, confidence_threshold, result_queue), daemon=True)
-#     tracker_thread.start()
-#     tracker_thread.join()
+            cv2.putText(annotated_frame, parking_status, (x1 + int((x2-x1)/2) - 40, y1 + int((y2-y1)/2)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-#     # Get the count data from the queue
-#     count_data = result_queue.get()
+        if incomplete_parking:
+            cv2.putText(annotated_frame, "Parking Incomplete!", (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        
+        video_writer.write(annotated_frame)
 
-#     # Clean up and close windows
-#     cv2.destroyAllWindows()
-
-#     return count_data
+    cap.release()
+    video_writer.release()
+    cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':

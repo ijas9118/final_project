@@ -1,54 +1,103 @@
 import React, { useState } from 'react';
-import './navbar.css'
 import { Link } from 'react-router-dom';
+import { FaBars, FaTimes } from 'react-icons/fa';
+import './navbar.css';
 
 function Navbar() {
   const [activeLink, setActiveLink] = useState('Home');
+  const [navbarOpen, setNavbarOpen] = useState(false);
+
+  const handleToggle = () => {
+    setNavbarOpen(!navbarOpen);
+  };
+
+  const closeMenu = () => {
+    setNavbarOpen(false);
+  };
 
   return (
-    <div className="bg-slate-800 h-16 w-full flex justify-between items-center px-32 gap-28">
-        <div className="text-white flex items-center gap-3 text-3xl">Logo</div>
-        <ul className="flex items-center justify-center">
-            <Link to={'/'}>
-                <li className={activeLink === 'Home' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('Home')}>
-                    Home
-                </li>
-            </Link>
-            <Link to={'/linecounter'}>
-                <li className={activeLink === 'LineCounter' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('LineCounter')}>
-                    Line Counter
-                </li>
-            </Link>
-            <Link to={'/polygoncounter'}>
-                <li className={activeLink === 'PolygonCounter' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('PolygonCounter')}>
-                    Polygon Counter
-                </li>
-            </Link>
-            <Link to={'/heatmap'}>
-                <li className={activeLink === 'Heatmap' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('Heatmap')}>
-                    Heatmap
-                </li>
-            </Link>
-            <Link to={'/multi-video'}>
-                <li className={activeLink === 'Multi-video' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('Multi-video')}>
-                    Multi-video
-                </li>
-            </Link>
-            <Link to={'/parking'}>
-                <li className={activeLink === 'Parking' ? 'nav-item active' : 'nav-item'} onClick={() => setActiveLink('Parking')}>
-                    Parking Safety
-                </li>
-            </Link>
-        </ul>
-        <button className="w-36 h-10 outline-none border-2 rounded-full text-slate-800 text-lg bg-slate-400">
-            Login
+    <nav className="bg-slate-800 h-16 w-full flex justify-between items-center px-4 md:px-32">
+      <div className="md:hidden">
+        <button onClick={handleToggle} className="text-white focus:outline-none">
+          {navbarOpen ? <FaTimes /> : <FaBars />}
         </button>
-        {/* <div className="flex items-center">
-            <div className="h-8 w-8 bg-white rounded-full flex items-center justify-center ml-4">
-            <span className="text-slate-500">U</span>
-            </div>
-        </div> */}
-    </div>
+      </div>
+      <ul
+        className={`md:flex md:items-center md:w-full md:justify-center absolute md:static bg-slate-800 w-full left-0 px-4 md:px-0 py-4 md:py-0 ${
+          navbarOpen ? 'top-16' : 'top-[-500px]'
+        } transition-all ease-in duration-500`}
+      >
+        <div className="md:flex md:justify-center md:w-full">
+          <Link to="/" onClick={() => { setActiveLink('Home'); closeMenu(); }}>
+            <li
+              className={activeLink === 'Home' ? 'nav-item active' : 'nav-item'}
+            >
+              Home
+            </li>
+          </Link>
+          <Link
+            to="/linecounter"
+            onClick={() => { setActiveLink('LineCounter'); closeMenu(); }}
+          >
+            <li
+              className={
+                activeLink === 'LineCounter' ? 'nav-item active' : 'nav-item'
+              }
+            >
+              Line Counter
+            </li>
+          </Link>
+          <Link
+            to="/polygoncounter"
+            onClick={() => { setActiveLink('PolygonCounter'); closeMenu(); }}
+          >
+            <li
+              className={
+                activeLink === 'PolygonCounter' ? 'nav-item active' : 'nav-item'
+              }
+            >
+              Polygon Counter
+            </li>
+          </Link>
+          <Link
+            to="/heatmap"
+            onClick={() => { setActiveLink('Heatmap'); closeMenu(); }}
+          >
+            <li
+              className={
+                activeLink === 'Heatmap' ? 'nav-item active' : 'nav-item'
+              }
+            >
+              Heatmap
+            </li>
+          </Link>
+          <Link
+            to="/multi-video"
+            onClick={() => { setActiveLink('Multi-video'); closeMenu(); }}
+          >
+            <li
+              className={
+                activeLink === 'Multi-video' ? 'nav-item active' : 'nav-item'
+              }
+            >
+              Multi-video
+            </li>
+          </Link>
+          <Link
+            to="/parking"
+            onClick={() => { setActiveLink('Parking'); closeMenu(); }}
+          >
+            <li
+              className={
+                activeLink === 'Parking' ? 'nav-item active' : 'nav-item'
+              }
+            >
+              Parking Safety
+            </li>
+          </Link>
+        </div>
+      </ul>
+    </nav>
   );
 }
 
